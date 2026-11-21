@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: OT Client Records API
+  version: 0.1.0
+  description: >
+    Provisional read contract. Client fields are based on the project brief and
+    must be validated against a blank or anonymized source workbook. Write
+    operations will be added with the Phase 2 service routes, matching the
+    approved OTM-only create/edit and soft-archive rules.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /clients:
+    get:
+      operationId: listAssignedClients
+      summary: List clients assigned to the authenticated staff member
+      parameters:
+        - in: query
+          name: searchTerm
+          required: false
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Assigned clients visible to the authenticated staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientListResponse"
+        "401":
+          description: Missing or invalid authentication
+        "500":
+          description: Request failed
+  /clients/{clientId}:
+    get:
+      operationId: getAssignedClient
+      summary: Get an assigned client
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Client visible to the authenticated staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientRecord"
+        "401":
+          description: Missing or invalid authentication
+        "404":
+          description: Client does not exist or is not assigned to the staff member
+        "500":
+          description: Request failed
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ClientRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - fullName
+        - ageYears
+        - cognitiveLevel
+        - diet
+        - supplements
+        - restraints
+        - activityGroup
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+          minLength: 1
+        ageYears:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+        cognitiveLevel:
+          type:
+            - string
+            - "null"
+        diet:
+          type:
+            - string
+            - "null"
+        supplements:
+          type:
+            - string
+            - "null"
+        restraints:
+          type:
+            - string
+            - "null"
+        activityGroup:
+          type:
+            - string
+            - "null"
+        createdAt:
+          type: string
+          format: date-time
+    ClientListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - clients
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientRecord"

@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+      - name: Test frontend contracts and auth transitions
+        working-directory: frontend
+        run: npm test
+
+  gateway-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: gateway/package-lock.json
+      - name: Install gateway dependencies
+        working-directory: gateway
+        run: npm ci
+      - name: Build gateway
+        working-directory: gateway
+        run: npm run build
+      - name: Test gateway
+        working-directory: gateway
+        run: npm test
+
+  ai-brain-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v6
+      - name: Install AI Brain dependencies
+        run: uv sync --project ai-brain --extra test --locked
+      - name: Test AI Brain
+        run: uv run --project ai-brain --extra test --locked pytest ai-brain/tests -q
